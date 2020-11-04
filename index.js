@@ -75,10 +75,12 @@ firebase.auth().onAuthStateChanged((user)=> {
   if(user){
     startRsvpButton.textContent="LOGOUT";
     guestbookContainer.style.display = "block";
+    subscribeGuestbook();
   }
   else{
     startRsvpButton.textContent="RSVP";
     guestbookContainer.style.display = "none";
+    unsubscribeGuestbook();
   }
 })
 // Listen to the form submission
@@ -98,7 +100,56 @@ form.addEventListener("submit", (e) => {
      return false;
      });
 
+     function subscribeGuestbook(){
+          // Create query for messages
+        guestbookListener = firebase.firestore().collection("guestbook").orderBy("timestamp","desc").onSnapshot((snaps) => {
+            // Reset page
+            guestbook.innerHTML = "";
+            // Loop through documents in database
+           snaps.forEach((doc) => {
+                 // Create an HTML entry for each document and add it to the chat
+                 const entry = document.createElement("p");     entry.textContent = doc.data().name + ": " + doc.data().text;
+                 guestbook.appendChild(entry);
+               });
+             });
+            };
 
+
+
+
+
+
+     firebase.firestore().collection("guestbook").orderBy("timestamp","desc").onSnapshot((snaps) => {
+        // Reset page
+        guestbook.innerHTML = "";
+        // Loop through documents in database
+        snaps.forEach((doc) => {
+            // Create an HTML entry for each document and add it to the chat
+           const entry = document.createElement("p");  entry.textContent = doc.data().name + ": " + doc.data().text;
+             guestbook.appendChild(entry);
+           });
+          });
+
+function unsubscribeGuestbook(){
+   if (guestbookListener != null)
+   {
+       guestbookListener();
+       guestbookListener = null;
+     }};
+
+rsvpYes.onclick = () => {
+  const userDoc = firebase.firestore().collection('attendees').doc(firebase.auth().currentUser.uid);
+   // If they RSVP'd yes, save a document with attending: true
+   userDoc.set({
+       attending: true }).catch(console.error)
+}
+rsvpNo.onclick = () => {
+  const userDoc = firebase.firestore().collection('attendees').doc(firebase.auth().currentUser.uid);
+   // If they RSVP'd no, save a document with attending: false
+   userDoc.set({
+       attending: false
+     }).catch(console.error)
+}
 }
 main();
 
